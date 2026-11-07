@@ -1,0 +1,31 @@
+name: Julia core checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Julia 1.12 (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: '1.12'
+      - uses: julia-actions/cache@v2
+      - name: Resolve package and run core tests
+        shell: bash
+        run: julia --project=. -e 'using Pkg; Pkg.instantiate(); Pkg.test()'
+      - name: Synthetic QNM interpretation test
+        shell: bash
+        run: julia --project=. test/selftest_interpretation.jl
+      - name: Vacuum smoke evolution
+        shell: bash
+        run: julia --project=. scripts/run_simulation.jl --smoke --vacuum
